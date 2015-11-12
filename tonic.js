@@ -42,7 +42,112 @@ var Tonic = Tonic || {
     SIXTEENTH_N : 0.0625,
 };
 
+function NotesData(notes) {
+    this.notes = notes;
+}
+
 Tonic.common = {
+    // Parse a string into an array of tokens
+    tokenize: function (s) {
+        var tokens = [];
+        var prev_token;
+
+        var operators = {
+            'return':['return','RETURN'],
+            '==':['==','DOUBLEEQUALS'],
+            ',': [',','COMMA'],
+            '*': ['*','TIMES'],
+            '/': ['/','DIVIDE'],
+            '=': ['=','EQUALS'],
+            '(': ['(','OPENPAREN'],
+            ')': [')','CLOSEPAREN'],
+            '<': ['<','OPENBRACKET'],
+            '>': ['>','CLOSEBRACKET'],
+            '\n':[';','EOL'],
+            ';': [';','EOL']
+        };
+
+        var whitespace_split = s.match(/\S+|\n/g);
+        
+        // loop through strings split on whitespace
+        for (var i in whitespace_split) {
+            var word = whitespace_split[i];
+            var token = '';
+
+            // check if word is operator
+            if ( typeof(operators[word]) !== 'undefined' ) {
+                tokens.push(operators[word]);
+                continue;
+            }
+            
+            // go character by character through string, separating
+            // out any tokens from the string
+            for (var j in word) {
+
+                var c = word[j];
+                var prev_c = (j > 0) ? word[j-1] : undefined;
+                var is_operator = false,
+                    two_char_op = false; // is a two-character operator like "=="
+                
+                // check for two-character operators by looking at
+                // this char and previous char together
+                if ( typeof(operators[ prev_c + c ]) !== 'undefined') {
+                    is_operator = true;
+                    two_char_op = true;
+                }
+                // check for single-character operators
+                if ( typeof(operators[c]) !== 'undefined' ) {
+                    is_operator = true;
+                }
+                // if not an operator add to token string. otherwise push the
+                // operator as well as the token string
+                if (!is_operator) {
+                    token += c;
+                } else {
+                    if (two_char_op) {
+                        token = token.slice(0,-1);
+                        if (token) {
+                           tokens.push(token);
+                        }
+                        tokens.push(operators[ prev_c + c ]);
+                        token = '';
+                    } else {
+                        if (token) {
+                            tokens.push(token);
+                        }
+                        tokens.push(operators[c]);
+                        token = '';
+                    }
+                }
+            }
+
+            if (token) {
+                tokens.push(token);
+            }
+        }
+        
+        return tokens;
+    },
+    // Parses an array of tokens into a string that can be passed to notes_string_to_notes
+    parse: function (tokens) {
+        
+        var ret_str = '';
+        var tree = new Tree('root');
+        
+        for (var i in tokens) {
+            var token = tokens[i];
+            
+            if (token.constructor === Array) {
+            } else {
+                if (token.match(/\d+/)) {
+                    var note_value = +token;
+                    var n = NotesData([note_value, null]);
+                }
+            }
+        }
+
+        return ret_str;
+    },
     // Utitilty function that converts a string into a sequence of note data
     // that can be passed to the NotePlayer Class
     notes_string_to_notes: function (s, key, scale) {
@@ -62,7 +167,6 @@ Tonic.common = {
             if (note != "") {
 
                 var note_details = note.split(",");
-                console.log(note_details);
                 var pitch       = note_details[0].trim(),
                     dur_string  = note_details[1].trim(),
                     freq,
