@@ -3,8 +3,37 @@
 // Custom Audio stuff
 //
 //==============================================================================
+//
+//------------------------------------------------------------------------------
+// NOTES SYNTAX REFERNCE
+//
+// Example:
+//   0,4                ; #1
+//   1,4                ; #2
+//   2,4
+//   x,8                ; #3
+//
+//   0,4
+//   1,4
+//   2#,8               ; #4
+//   2x,4               ; #5
+//   x,4
+//   ; End                #6
+//
+//  Notes are separated by whitespace (spaces, newlines).
+//  From above:
+//      1. First number (0) is note value (0 = first note in scale).
+//      2. Second number is duration (1/4 or a quarter note).
+//      3. A value of 'x' denotes a rest.
+//      4. '#'s or 'b's can be added to notes to sharpen or flatten them, respectively.
+//      5. A note value followed by 'x' denotes a "staccato" note, which is
+//         played quickly (1/16) then folowed by silence. The total length of
+//         the note plus silence is still determined by the given duration
+//      6. ';' marks the rest of the line as a comment and is ignored by the parser.
+//------------------------------------------------------------------------------
 
-var MyMusic = MyMusic || {
+
+var Tonic = Tonic || {
     // note duration definitions in multiples of beats
     WHOLE_N     : 1,
     HALF_N      : 0.5,
@@ -13,14 +42,17 @@ var MyMusic = MyMusic || {
     SIXTEENTH_N : 0.0625,
 };
 
-MyMusic.common = {
+Tonic.common = {
     // Utitilty function that converts a string into a sequence of note data
     // that can be passed to the NotePlayer Class
     notes_string_to_notes: function (s, key, scale) {
         var KEY_midi = typeof(key) == "string" ? MIDIUtils.noteNameToNoteNumber(key) : key;
 
+        // remove comments
+        s = s.replace(/;.*/g, '');
+
         var ret_notes = {},
-            notes = s.split(" ");
+            notes = s.split(/\s+/);
 
         var loc = 0;
 
@@ -28,10 +60,13 @@ MyMusic.common = {
             var note = notes[i].trim();
 
             if (note != "") {
+
                 var note_details = note.split(",");
-                var pitch       = note_details[0],
-                    dur_string  = note_details[1],
-                    freq;
+                console.log(note_details);
+                var pitch       = note_details[0].trim(),
+                    dur_string  = note_details[1].trim(),
+                    freq,
+                    staccato = false;
 
                 // allow rests (defined by 'x' in note string)
                 if (pitch == 'x') {
@@ -39,6 +74,14 @@ MyMusic.common = {
                     freq = -1; // freq of -1 means this note will be silent
 
                 } else {
+                    // check if note is staccato
+                    staccato = pitch.slice(-1) == 'x';
+                    pitch = pitch.replace('x','');
+
+                    // count up pitch modifiers
+                    var offset = ((pitch.match(/#/g) || []).length) - ((pitch.match(/b/g) || []).length);
+                    pitch = pitch.replace(/#/g, '');
+                    pitch = pitch.replace(/b/g, '');
 
                     var pitch = +pitch;
 
@@ -57,14 +100,39 @@ MyMusic.common = {
 
                         // variable "pitch" is now a MIDI note number
                     }
+                    pitch += offset;
 
                     freq = MIDIUtils.noteNumberToFrequency( KEY_midi + (pitch) ); // pitch of 0 is KEY pitch
                 }
 
+                // default to silence if the pitch was miscalculated
+                if (isNaN(freq)) {
+                    freq = -1;
+                }
+
                 duration = NotePlayer.prototype.duration_string_to_duration(dur_string);
-                ret_notes[loc] = freq;
-                
-                loc += duration;
+
+                // if this note is staccato, add 2 notes: this one at 1/16 and
+                // a rest at (duration - 1/16)
+                if (staccato) {
+
+                    var rest_duration = duration - 1;
+                    duration = 1;
+
+                    // add this note
+                    ret_notes[loc] = freq;
+                    loc += duration;
+                    // add rest
+                    ret_notes[loc] = -1;
+                    loc += rest_duration;
+
+                } else {
+
+                    ret_notes[loc] = freq;
+                    loc += duration;
+
+                }
+
             }
         }
         ret_notes[loc] = -1;
@@ -73,7 +141,7 @@ MyMusic.common = {
     shift_octave: function (n, i) { return n + (12 * (i || 0)); }
 };
 
-MyMusic.scales = {
+Tonic.scales = {
     MAJOR:      [0, 2, 4, 5, 7, 9, 11],
     DORIAN:     [0, 2, 3, 5, 7, 9, 10],
     PHRYGIAN:   [0, 1, 3, 5, 7, 8, 10],
@@ -221,7 +289,6 @@ NoteController.prototype.play = function() {
 
     for (var i in this.players) {
         this.players[i].PLAYING = true;
-        console.log(this.players[i].max_loc);
     }
 
     // hit it
@@ -283,7 +350,7 @@ NoteController.prototype.play_step = function () {
     if (this.PLAYING) {
         requestTimeout(function() {
             self.play_step();
-        }, this.SECONDS_PER_BEAT * (1/16) * 1000);
+        }, this.SECONDS_PER_BEAT * (1/4) * 1000);
 
     } else {
         self.stop();;

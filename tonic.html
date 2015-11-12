@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Tonic: Music Programming</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 </head>
 <body>
     <button id='play-button'>Play</button>
@@ -12,104 +14,16 @@
     <script src="MIDIUtils.js"></script>
     <script src="requestTimeout.js"></script>
 
-    <script src="MyMusic2.js"></script>
-    <script src="MyMusicDecoder.js"></script>
+    <script src="tonic.js"></script>
+    <script src="tonic-decoder.js"></script>
     <script>
     // specific musical parameters
 
-    var TEMPO    = 120,    // bpm
+    var TEMPO    = 110,    // bpm
         TIME_SIG = 4;     // even numbers are duple, odd are triple, DOESN'T DO ANYTHING AT THE MOMENT
 
-    var KEY = 'A-4';
+    var KEY = 'C#5';
     KEY = MIDIUtils.noteNameToNoteNumber(KEY);
-
-    var notes_string =
-    "\
-     0,4 \
-     2,4 \
-     4,2 \
-     0,2 \
-     \
-     0,4 \
-     2,4 \
-     4,2 \
-     0,2 \
-     \
-     0,4 \
-     2,4 \
-     4,2 \
-     0,2 \
-     \
-     0,4 \
-     2,4 \
-     4,2 \
-     0,2 \
-     \
-     \
-     2,4 \
-     3,4 \
-     1,2 \
-     -3,2 \
-     \
-     2,4 \
-     3,4 \
-     1,2 \
-     -3,2 \
-     \
-     2,4 \
-     3,4 \
-     1,2 \
-     -3,2 \
-     \
-     2,4 \
-     3,4 \
-     1,2 \
-     -3,2 \
-     \
-     \
-     1,4 \
-     2,4 \
-     3,2 \
-     -1,2 \
-     \
-     1,4 \
-     2,4 \
-     3,2 \
-     -1,2 \
-     \
-     1,4 \
-     2,4 \
-     3,2 \
-     -1,2 \
-     \
-     1,4 \
-     2,4 \
-     3,2 \
-     -1,2 \
-     \
-     \
-     2,4 \
-     1,4 \
-     0,2 \
-     -4,2 \
-     \
-     2,4 \
-     1,4 \
-     0,2 \
-     -4,2 \
-     \
-     2,4 \
-     1,4 \
-     0,2 \
-     -4,2 \
-     \
-     2,4 \
-     1,4 \
-     0,2 \
-     -4,2 \
-     "
-    ;
-    var notes = MyMusic.common.notes_string_to_notes(notes_string, key = KEY, MyMusic.scales.MINOR);
 
     var notes_string2 =
     "\
@@ -136,28 +50,37 @@
     "
     ;
 
-    var notes2 = MyMusic.common.notes_string_to_notes( notes_string2, key = MyMusic.common.shift_octave(KEY, -1) );
+    $.ajax({
+        type: 'GET',
+        url: 'smoke_on_the_water.notes',
+        success: function (file_contents) {
+            // success
+            var notes = Tonic.common.notes_string_to_notes(file_contents, key = KEY, Tonic.scales.MINOR_PENT);
+            //var notes2 = Tonic.common.notes_string_to_notes( notes_string2, key = Tonic.common.shift_octave(KEY, -1) );
 
-    // Use audioContext from webaudio_tools.js
-    var s1 = new Synth(audioContext, gain=0.1);
-    var s2 = new Synth(audioContext, gain=0.17);
+            // Use audioContext from webaudio_tools.js
+            var s1 = new Synth(audioContext, gain=0.05);
+            var s2 = new Synth(audioContext, gain=0.17);
 
-    var np = new NotePlayer(s1, notes);
-    var np2 = new NotePlayer(s2, notes2);
+            var np = new NotePlayer(s1, notes);
+            //var np2 = new NotePlayer(s2, notes2);
 
-    var nc = new NoteController(TEMPO);
-    nc.add_player(np);
-    nc.add_player(np2);
+            var nc = new NoteController(TEMPO);
+            nc.add_player(np);
+            //nc.add_player(np2);
 
-    var play_button = document.getElementById('play-button');
-    
-    play_button.onclick = function() {
-        if (nc.PLAYING) {
-            nc.stop();
-        } else {
-            nc.play();
+            var play_button = document.getElementById('play-button');
+            
+            play_button.onclick = function() {
+                if (nc.PLAYING) {
+                    nc.stop();
+                } else {
+                    nc.play();
+                }
+            };
         }
-    };
+    });
+
 
     </script>
 </body>
