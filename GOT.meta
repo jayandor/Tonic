@@ -1,0 +1,15 @@
+RET = NG();
+
+var n = [NG(0, 2, 4, 0), NG(2, 3, 1, -3), NG(1, 2, 3, -1), NG(2, 1, 0, -4)];
+var d = NG( MULTIPLY(ND(8), 2), MULTIPLY(ND(4), 2) );
+
+RET = RET._ADD( Scale( MULTIPLY( DIVIDE( NG(0,2,4,0), d), 4 ), Tonic.scales.MINOR) );
+RET = RET._ADD( Scale( MULTIPLY( DIVIDE( NG(0,2,4,0), d), 4 ), Tonic.scales.MIXOLYDIAN) );
+
+var first_verse = NG();
+for (var i in n) {
+    var x = n[i];
+    first_verse = ADD( first_verse, Scale( MULTIPLY( DIVIDE( x, d ), 4 ), Tonic.scales.MINOR) );
+}
+
+RET = ADD(RET, MULTIPLY( first_verse, 2));

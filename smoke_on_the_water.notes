@@ -1,0 +1,24 @@
+; First part
+0x,4 ; test
+1x,4
+2x,4
+x,8
+
+; Second part
+0x,4
+1x,4
+2#x,8
+2x,4
+x,4
+
+; Third part
+0x,4
+1x,4
+2x,4
+x,8
+
+; Fourth part
+1x,4
+0x,4
+x,8
+x,2

@@ -1,0 +1,22 @@
+RET = NG();
+
+RET = ADD( RET, DIVIDE( NG(-3), ND("4")) );
+
+var d = NG( ND("4x"), ND("4x"), ND("8x"), ND("8x"));
+
+var a = DIVIDE( MULTIPLY( NG(0), 4), d);
+var b = DIVIDE( MULTIPLY( NG(-3), 4), d);
+var c = DIVIDE( MULTIPLY( NG(-1), 4), d);
+var d = DIVIDE( MULTIPLY( NG(-4), 4), d);
+
+RET = ADD( RET, MULTIPLY(a, 8));
+
+var first_verse = NG();
+first_verse = ADD( first_verse, MULTIPLY(a, 4));
+first_verse = ADD( first_verse, MULTIPLY(b, 4));
+first_verse = ADD( first_verse, MULTIPLY(c, 4));
+first_verse = ADD( first_verse, MULTIPLY(d, 4));
+
+RET = ADD( RET, MULTIPLY(first_verse, 2));
+
+RET = Scale( RET, Tonic.scales.MINOR );

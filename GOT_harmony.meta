@@ -1,0 +1,21 @@
+RET = NG();
+
+RET = ADD( RET, DIVIDE( NG("x"), ND(4)));
+
+var a = ADD( ADD( DIVIDE( NG("0"), ND("2.x") ), DIVIDE( NG("x"), ND("2") ) ), DIVIDE( NG("0"), ND("4x")) );
+
+RET = ADD( RET, MULTIPLY( a, 4) );
+
+var d = NG( ND("2."), ND("2."), ND("8"), ND("8"), ND("2"), ND("2"), ND("8"), ND("8"), ND("2."), ND("1."), ND("2.") )
+var d2 = NG( ND("2."), ND("2."), ND("8"), ND("8"), ND("2"), ND("2."), ND("8"), ND("8"), ND("2"), ND("1."), ND("2.") )
+var b = DIVIDE( NG(4, 0, 2, 3, 4, 0, 2, 3, 1, 1, "x"), d);
+var c = DIVIDE( NG(3, -1, 1, 2, 3, -1, 2, 1, 0, 0, "x"), d2);
+
+var first_verse = NG();
+
+first_verse = ADD( first_verse, b);
+first_verse = ADD( first_verse, c);
+
+RET = ADD( RET, MULTIPLY( first_verse, 2));
+
+RET = Scale( RET, Tonic.scales.MINOR );
