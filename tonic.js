@@ -264,7 +264,7 @@ Tonic.scales = {
 // Synth Class
 //
 
-function Synth(context, gain) {
+function Synth(context, gain, osc_type) {
     this.oscillator;
     this.amp;
     this.GAIN = gain || 0.1;
@@ -275,6 +275,7 @@ function Synth(context, gain) {
         this.oscillator = this.context.createOscillator();
         fixOscillator(this.oscillator);
 
+        this.oscillator.type = osc_type || 'sine';
         this.oscillator.frequency.value = 440;
 
         this.amp = this.context.createGain();
@@ -301,7 +302,9 @@ Synth.prototype.startTone = function(frequency, gain) {
     this.amp.gain.cancelScheduledValues(now);
     // Anchor beginning of ramp at current value.
     this.amp.gain.setValueAtTime(this.amp.gain.value, now);
-    this.amp.gain.linearRampToValueAtTime(gain, this.context.currentTime + 0.01);
+    this.amp.gain.linearRampToValueAtTime(0, this.context.currentTime + 0.05);
+    this.amp.gain.setValueAtTime(this.amp.gain.value, now);
+    this.amp.gain.linearRampToValueAtTime(gain, this.context.currentTime + 0.05);
     
     writeMessageToID( "soundStatus", "<p>Play tone at frequency = " + frequency  + "</p>");
 };
@@ -313,7 +316,7 @@ Synth.prototype.stopTone = function() {
     this.amp.gain.cancelScheduledValues(now);
 
     this.amp.gain.setValueAtTime(this.amp.gain.value, now);
-    this.amp.gain.linearRampToValueAtTime(0.0, this.context.currentTime + 0.01);
+    this.amp.gain.linearRampToValueAtTime(0.0, this.context.currentTime + 0.5);
 
     writeMessageToID( "soundStatus", "<p>Stop tone.</p>");
 

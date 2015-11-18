@@ -84,14 +84,14 @@
         var bass_meta = myTonicFunc(bass_data).print();
         var harmony_meta = myTonicFunc(harmony_data).print();
 
-        var notes = Tonic.common.notes_string_to_notes(lead_meta, key = KEY);
-        var notes2 = Tonic.common.notes_string_to_notes(bass_meta, key = Tonic.common.shift_octave(KEY, -2) );
+        var notes = Tonic.common.notes_string_to_notes(lead_meta, key = Tonic.common.shift_octave(KEY, -1));
+        var notes2 = Tonic.common.notes_string_to_notes(bass_meta, key = Tonic.common.shift_octave(KEY, -3) );
         var notes3 = Tonic.common.notes_string_to_notes(harmony_meta, key = Tonic.common.shift_octave(KEY, 1) );
 
         // Use audioContext from webaudio_tools.js
-        var s1 = new Synth(audioContext, gain=0.05);
-        var s2 = new Synth(audioContext, gain=0.10);
-        var s3 = new Synth(audioContext, gain=0.03);
+        var s1 = new Synth(audioContext, gain=0.05, 'triangle');
+        var s2 = new Synth(audioContext, gain=0.14);
+        var s3 = new Synth(audioContext, gain=0.01, 'sawtooth');
 
         var np = new NotePlayer(s1, notes);
         var np2 = new NotePlayer(s2, notes2);
@@ -108,7 +108,7 @@
             if (nc.PLAYING) {
                 nc.stop();
             } else {
-                nc.play(offset = 16 + 12 * 7);
+                nc.play(offset = 0);
             }
         };
     });
