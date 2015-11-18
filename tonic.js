@@ -32,6 +32,9 @@
 //      6. ';' marks the rest of the line as a comment and is ignored by the parser.
 //------------------------------------------------------------------------------
 
+function clamp(num, min, max) {
+  return num < min ? min : num > max ? max : num;
+}
 
 var Tonic = Tonic || {
     // note duration definitions in multiples of beats

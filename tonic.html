@@ -20,7 +20,7 @@
     <script>
     // specific musical parameters
 
-    var TEMPO    = 110,    // bpm
+    var TEMPO    = 110 * 3,    // bpm
         TIME_SIG = 4;     // even numbers are duple, odd are triple, DOESN'T DO ANYTHING AT THE MOMENT
 
     var KEY = 'C#5';
@@ -64,10 +64,11 @@
 
     $.ajax({
         type: 'GET',
-        url: 'smoke_on_the_water.notes',
+        url: 'GoT.meta',
         success: function (file_contents) {
             // success
-            var notes = Tonic.common.notes_string_to_notes(file_contents, key = KEY, Tonic.scales.MINOR_PENT);
+            var meta = myTonicFunc(file_contents).print();
+            var notes = Tonic.common.notes_string_to_notes(meta, key = KEY);
             //var notes2 = Tonic.common.notes_string_to_notes( notes_string2, key = Tonic.common.shift_octave(KEY, -1) );
 
             // Use audioContext from webaudio_tools.js
