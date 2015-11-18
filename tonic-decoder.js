@@ -7,8 +7,8 @@ function decode(string) {
 }
 
 var decoded_string = decode(string);
-console.log(decoded_string == target);
-console.log(decoded_string);
+// console.log(decoded_string == target);
+// console.log(decoded_string);
 
 //------------------------------------------------------------------------------
 
@@ -155,8 +155,16 @@ function Scale(g, scale) {
     var ret_NG = new _NG();
 
     for (var i in g.notes) {
-        var pitch = g.notes[i][0];
+
+        var pitch = g.notes[i][0].toString();
         if (pitch === null) { continue; }
+
+        // count up pitch modifiers
+        var offset = ((pitch.match(/#/g) || []).length) - ((pitch.match(/b/g) || []).length);
+        pitch = pitch.replace(/#/g, '');
+        pitch = pitch.replace(/b/g, '');
+
+        pitch = +pitch;
 
         // calculate pitch from given note in scale
         if (pitch >= 0) {
@@ -168,7 +176,10 @@ function Scale(g, scale) {
         var scale_pitch = scale[index]; // get pitch from scale
         scale_pitch += (Math.floor(pitch / scale.length)) * 12; // add octave
 
-        ret_NG.add_note([scale_pitch, ND(g.notes[i][1].value)]);
+        var final_pitch = scale_pitch + offset;
+
+        ret_NG.add_note([final_pitch, ND(g.notes[i][1].value)]);
+
     }
     return ret_NG;
 }
@@ -177,11 +188,33 @@ function Scale(g, scale) {
 
 function myTonicFunc(s) {
     var RET;
+    // console.log('s','"' + s + '"');
 
-    s = s.replace(/\(\+/g, 'ADD(');
-    s = s.replace(/\(\*/g, 'MULTIPLY(');
+    // var operators = ['+','/','(',')','*'];
+    // var op_positions = {};
+
+    // for (var i in operators) {
+    //     var operator = operators[i];
+    //     var positions = [];
+    //     var start = 0;
+        
+    //     while (start < s.length) {
+    //         var index = s.indexOf(operator, start);
+    //         if (index != -1) {
+    //             positions.push(index);
+    //             start = index + 1;
+    //         } else {
+    //             start = s.length;
+    //         }
+    //     }
+    //     op_positions[operator] = positions;
+    // }
+
+    // console.log('positions', op_positions);
 
     eval(s);
+
+    console.log(RET.print());
 
     return RET;
 }
@@ -189,7 +222,8 @@ function myTonicFunc(s) {
 var a = ND(1);
 var b = MULTIPLY( ND(2), 4 );
 var c = MULTIPLY( ND(3), 4 );
-var d = NG(0, 2, 4, 0);
+var d = NG(0, "2#", 4, 0);
+console.log(d.print());
 
 //var z = myTonicFunc();
 //console.log('z', z.print());

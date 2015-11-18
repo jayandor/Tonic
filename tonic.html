@@ -20,10 +20,10 @@
     <script>
     // specific musical parameters
 
-    var TEMPO    = 110 * 3,    // bpm
+    var TEMPO    = 200,    // bpm
         TIME_SIG = 4;     // even numbers are duple, odd are triple, DOESN'T DO ANYTHING AT THE MOMENT
 
-    var KEY = 'C#5';
+    var KEY = 'A-4';
     KEY = MIDIUtils.noteNameToNoteNumber(KEY);
 
     var notes_string2 =
@@ -57,41 +57,60 @@
         success: function (file_contents) {
             var tokens = Tonic.common.tokenize( file_contents );
             var result = Tonic.common.parse( tokens );
-            console.log(tokens);
-            console.log(result);
+            // console.log(tokens);
+            // console.log(result);
         }
     });
 
-    $.ajax({
-        type: 'GET',
-        url: 'GoT.meta',
-        success: function (file_contents) {
-            // success
-            var meta = myTonicFunc(file_contents).print();
-            var notes = Tonic.common.notes_string_to_notes(meta, key = KEY);
-            //var notes2 = Tonic.common.notes_string_to_notes( notes_string2, key = Tonic.common.shift_octave(KEY, -1) );
+    $.when(
+        $.ajax({
+            type: 'GET',
+            url: 'GOT.meta'
+        }),
+        $.ajax({
+            type: 'GET',
+            url: 'GOT_bass.meta'
+        }),
+        $.ajax({
+            type: 'GET',
+            url: 'GOT_harmony.meta'
+        })
+    ).done(function(a1, a2, a3) {
+        var lead_data = a1[0];
+        var bass_data = a2[0];
+        var harmony_data = a3[0];
 
-            // Use audioContext from webaudio_tools.js
-            var s1 = new Synth(audioContext, gain=0.05);
-            var s2 = new Synth(audioContext, gain=0.17);
+        var lead_meta = myTonicFunc(lead_data).print();
+        var bass_meta = myTonicFunc(bass_data).print();
+        var harmony_meta = myTonicFunc(harmony_data).print();
 
-            var np = new NotePlayer(s1, notes);
-            //var np2 = new NotePlayer(s2, notes2);
+        var notes = Tonic.common.notes_string_to_notes(lead_meta, key = KEY);
+        var notes2 = Tonic.common.notes_string_to_notes(bass_meta, key = Tonic.common.shift_octave(KEY, -2) );
+        var notes3 = Tonic.common.notes_string_to_notes(harmony_meta, key = Tonic.common.shift_octave(KEY, 1) );
 
-            var nc = new NoteController(TEMPO);
-            nc.add_player(np);
-            //nc.add_player(np2);
+        // Use audioContext from webaudio_tools.js
+        var s1 = new Synth(audioContext, gain=0.05);
+        var s2 = new Synth(audioContext, gain=0.10);
+        var s3 = new Synth(audioContext, gain=0.03);
 
-            var play_button = document.getElementById('play-button');
-            
-            play_button.onclick = function() {
-                if (nc.PLAYING) {
-                    nc.stop();
-                } else {
-                    nc.play();
-                }
-            };
-        }
+        var np = new NotePlayer(s1, notes);
+        var np2 = new NotePlayer(s2, notes2);
+        var np3 = new NotePlayer(s3, notes3);
+
+        var nc = new NoteController(TEMPO);
+        nc.add_player(np);
+        nc.add_player(np2);
+        nc.add_player(np3);
+
+        var play_button = document.getElementById('play-button');
+        
+        play_button.onclick = function() {
+            if (nc.PLAYING) {
+                nc.stop();
+            } else {
+                nc.play(offset = 16 + 12 * 7);
+            }
+        };
     });
 
 

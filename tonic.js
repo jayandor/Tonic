@@ -182,8 +182,8 @@ Tonic.common = {
 
                 } else {
                     // check if note is staccato
-                    staccato = pitch.slice(-1) == 'x';
-                    pitch = pitch.replace('x','');
+                    staccato = dur_string.slice(-1) == 'x';
+                    dur_string = dur_string.replace('x','');
 
                     // count up pitch modifiers
                     var offset = ((pitch.match(/#/g) || []).length) - ((pitch.match(/b/g) || []).length);
@@ -389,9 +389,9 @@ NoteController.prototype.add_player = function(player) {
     this.players.push(player);
 };
 
-NoteController.prototype.play = function() {
+NoteController.prototype.play = function(offset) {
     this.stop();
-    this.loc = 0;
+    this.loc = offset || 0;
     this.PLAYING = true;
 
     for (var i in this.players) {
@@ -415,7 +415,6 @@ NoteController.prototype.stop = function () {
 // start the sequence playing
 NoteController.prototype.begin = function () {
     this.PLAYING = true;
-    this.loc = 0;
     this.play_step();
 }
 
