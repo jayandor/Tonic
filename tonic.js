@@ -245,7 +245,7 @@ Tonic.common = {
         ret_notes[loc] = -1;
         return ret_notes;
     },
-    shift_octave: function (n, i) { return n + (12 * (i || 0)); }
+    shift_octave: function (n, i) { return n + (12 * (i || 0)); },
 };
 
 Tonic.scales = {
@@ -260,66 +260,120 @@ Tonic.scales = {
     MINOR_PENT: [0, 3, 5, 7, 10],
 };
 
+Tonic.active_voices = {};
+
 //------------------------------------------------------------------------------
 // Synth Class
 //
 
+var Voice = (function(context) {
+    function Voice(frequency, gain, type){
+        this.frequency = frequency;
+        this.gain = gain;
+        this.oscillators = [];
+        this.type = type;
+    };
+
+    Voice.prototype.start = function() {
+        /* VCO */
+        var vco = context.createOscillator();
+        console.log(vco);
+        vco.type = this.type;
+        vco.frequency.value = this.frequency;
+
+        /* VCA */
+        var vca = context.createGain();
+        vca.gain.value = this.gain;
+
+        /* connections */
+        vco.connect(vca);
+        vca.connect(context.destination);
+
+        vco.start(0);
+
+        /* Keep track of the oscillators used */
+        this.oscillators.push(vco);
+    };
+
+    Voice.prototype.stop = function() {
+        for (var i in this.oscillators) {
+            var oscillator = this.oscillators[i];
+            oscillator.stop();
+        }
+    };
+
+    return Voice;
+  })(audioContext);
+
 function Synth(context, gain, osc_type) {
-    this.oscillator;
-    this.amp;
+    // this.oscillator;
+    // this.amp;
     this.GAIN = gain || 0.1;
     this.context = context;
+    this.osc_type = osc_type;
 
-    if( this.context )
-    {
-        this.oscillator = this.context.createOscillator();
-        fixOscillator(this.oscillator);
+    // if( this.context )
+    // {
+    //     this.oscillator = this.context.createOscillator();
+    //     fixOscillator(this.oscillator);
 
-        this.oscillator.type = osc_type || 'sine';
-        this.oscillator.frequency.value = 440;
+    //     this.oscillator.type = osc_type || 'sine';
+    //     this.oscillator.frequency.value = 440;
 
-        this.amp = this.context.createGain();
-        this.amp.gain.value = 0;
+    //     this.amp = this.context.createGain();
+    //     this.amp.gain.value = 0;
     
-        // Connect oscillator to amp and amp to the mixer of the context.
-        // This is like connecting cables between jacks on a modular synth.
-        this.oscillator.connect(this.amp);
-        this.amp.connect(this.context.destination);
+    //     // Connect oscillator to amp and amp to the mixer of the context.
+    //     // This is like connecting cables between jacks on a modular synth.
+    //     this.oscillator.connect(this.amp);
+    //     this.amp.connect(this.context.destination);
 
-        this.oscillator.start(0);
+    //     this.oscillator.start(0);
 
-        writeMessageToID( "soundStatus", "<p>Audio initialized.</p>");
-    }
+    //     writeMessageToID( "soundStatus", "<p>Audio initialized.</p>");
+    // }
 }
 
 Synth.prototype.startTone = function(frequency, gain) {
-    var now = this.context.currentTime;
-    this.oscillator.frequency.setValueAtTime(frequency, now);
+    // var now = this.context.currentTime;
+    // this.oscillator.frequency.setValueAtTime(frequency, now);
     
-    // Ramp up the gain so we can hear the sound.
-    // We can ramp smoothly to the desired value.
-    // First we should cancel any previous scheduled events that might interfere.
-    this.amp.gain.cancelScheduledValues(now);
-    // Anchor beginning of ramp at current value.
-    this.amp.gain.setValueAtTime(this.amp.gain.value, now);
-    this.amp.gain.linearRampToValueAtTime(0, this.context.currentTime + 0.05);
-    this.amp.gain.setValueAtTime(this.amp.gain.value, now);
-    this.amp.gain.linearRampToValueAtTime(gain, this.context.currentTime + 0.05);
+    // // Ramp up the gain so we can hear the sound.
+    // // We can ramp smoothly to the desired value.
+    // // First we should cancel any previous scheduled events that might interfere.
+    // this.amp.gain.cancelScheduledValues(now);
+    // // Anchor beginning of ramp at current value.
+    // this.amp.gain.setValueAtTime(this.amp.gain.value, now);
+    // this.amp.gain.linearRampToValueAtTime(0, this.context.currentTime + 0.05);
+    // this.amp.gain.setValueAtTime(this.amp.gain.value, now);
+    // this.amp.gain.linearRampToValueAtTime(gain, this.context.currentTime + 0.05);
+
+    var voice = new Voice(frequency, gain, this.osc_type);
+    Tonic.active_voices[frequency] = voice;
+    voice.start()
+    console.log('av', Tonic.active_voices);
+
     
     writeMessageToID( "soundStatus", "<p>Play tone at frequency = " + frequency  + "</p>");
 };
 
-Synth.prototype.stopTone = function() {
+Synth.prototype.stopTone = function(frequency) {
 
-    var now = this.context.currentTime;
+    // var now = this.context.currentTime;
 
-    this.amp.gain.cancelScheduledValues(now);
+    // this.amp.gain.cancelScheduledValues(now);
 
-    this.amp.gain.setValueAtTime(this.amp.gain.value, now);
-    this.amp.gain.linearRampToValueAtTime(0.0, this.context.currentTime + 0.5);
+    // this.amp.gain.setValueAtTime(this.amp.gain.value, now);
+    // this.amp.gain.linearRampToValueAtTime(0.0, this.context.currentTime + 0.5);
 
-    writeMessageToID( "soundStatus", "<p>Stop tone.</p>");
+    // writeMessageToID( "soundStatus", "<p>Stop tone.</p>");
 
+    if (frequency) {
+        if (Tonic.active_voices[frequency]) {
+            Tonic.active_voices[frequency].stop();
+            delete Tonic.active_voices[frequency];
+        }
+    }
 };
 
 //
@@ -343,6 +397,7 @@ function NotePlayer(synth, notes) {
             this.max_loc = loc;
         }
     }
+    this.active_voices = [];
 
     this.PLAYING = false;
 
@@ -351,6 +406,11 @@ function NotePlayer(synth, notes) {
 // makes the actual sound of the note
 NotePlayer.prototype.sound_note = function (note, gain) {
 
+    for (var i in this.active_voices) {
+        this.synth.stopTone(this.active_voices[i]);
+    }
+    this.active_voices = [];
+    this.active_voices.push(note.freq);
     this.synth.startTone(note.freq, gain);
 
 };
@@ -358,7 +418,10 @@ NotePlayer.prototype.sound_note = function (note, gain) {
 // called at the end of the sequence or just to stop the sound
 NotePlayer.prototype.stop = function () {
 
-    this.synth.stopTone();
+    for (var i in this.active_voices) {
+        this.synth.stopTone(this.active_voices[i]);
+    }
+    this.active_voices = [];
     this.PLAYING = false;
 
 }
